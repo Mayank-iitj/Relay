@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { IngestModal } from '@/components/workbench/IngestModal';
+import SpecularButton from '@/components/SpecularButton/SpecularButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -292,13 +293,28 @@ export default function HandoverWorkbench() {
               <span className="opacity-60">{data?.manifest_hash ? data.manifest_hash.substring(0, 10) + '...' : ''}</span>
             </div>
           ) : (
-            <button
+            <SpecularButton
+              size="sm"
+              radius={4}
+              tint="#ffffff"
+              tintOpacity={0.06}
+              textColor="#ECEDEE"
+              lineColor="#60A5FA"
+              baseColor="#26292B"
+              intensity={1.2}
+              idleIntensity={0.3}
+              shineSize={12}
+              shineFade={30}
+              thickness={1.3}
+              glow={1}
+              followMouse
+              proximity={200}
               onClick={handleFreeze}
               disabled={isFreezing}
-              className="bg-[#ECEDEE] text-[#0C0D0E] px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-[#B0B2B5] transition-all active:scale-95 disabled:opacity-50"
+              className="text-[10px] font-mono uppercase font-bold tracking-widest px-3 py-1"
             >
               {isFreezing ? 'Freezing...' : 'Freeze Dossier'}
-            </button>
+            </SpecularButton>
           )}
         </div>
       </header>
