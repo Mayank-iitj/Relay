@@ -700,3 +700,4 @@ export async function PUT(req: NextRequest, { params }: { params: { route: strin
 
   return NextResponse.json({ detail: 'Not found' }, { status: 404 });
 }
+
