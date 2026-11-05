@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { IngestModal } from '@/components/workbench/IngestModal';
 import TechText from '@/components/TechText/TechText';
 import CircularText from '@/components/CircularText/CircularText';
+import CrystalizedBall from '@/components/CrystalizedBall/CrystalizedBall';
+import DitherVeil from '@/components/DitherVeil/DitherVeil';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -15,6 +17,7 @@ export default function RelayDashboard() {
   const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeVisualizer, setActiveVisualizer] = useState<'plasma' | 'veil'>('plasma');
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -173,6 +176,67 @@ export default function RelayDashboard() {
             <p className="text-xs text-[#8B8D98] leading-relaxed">
               Calculates a canonical digest across verified claims, freezing the transition dossier into an unalterable compliance audit record.
             </p>
+          </div>
+        </section>
+
+        {/* Interactive Engine Visualizers */}
+        <section className="space-y-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono uppercase tracking-widest text-[#8B8D98]">
+                Institutional Engine Visualizers
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-[#151718] border border-[#26292B] text-[#4ADE80] rounded-sm">
+                WEBGL SHADERS
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 bg-[#151718] border border-[#26292B] p-0.5 rounded-sm">
+              <button
+                onClick={() => setActiveVisualizer('plasma')}
+                className={`text-[10px] font-mono px-3 py-1 rounded-sm uppercase tracking-wider transition-colors ${
+                  activeVisualizer === 'plasma'
+                    ? 'bg-[#26292B] text-[#4ADE80] font-bold'
+                    : 'text-[#8B8D98] hover:text-[#ECEDEE]'
+                }`}
+              >
+                Kernel Plasma Ball
+              </button>
+              <button
+                onClick={() => setActiveVisualizer('veil')}
+                className={`text-[10px] font-mono px-3 py-1 rounded-sm uppercase tracking-wider transition-colors ${
+                  activeVisualizer === 'veil'
+                    ? 'bg-[#26292B] text-[#4ADE80] font-bold'
+                    : 'text-[#8B8D98] hover:text-[#ECEDEE]'
+                }`}
+              >
+                Forensic Dither Veil
+              </button>
+            </div>
+          </div>
+
+          <div className="w-full h-72 md:h-80 relative overflow-hidden bg-[#151718]/40 border border-[#26292B] rounded-sm flex items-center justify-center">
+            {activeVisualizer === 'plasma' ? (
+              <CrystalizedBall
+                preset="aurora"
+                color="#4ADE80"
+                size={0.7}
+                crackle={0.75}
+                fill={0.5}
+                interactive
+                hoverStrength={0.75}
+              />
+            ) : (
+              <DitherVeil
+                pattern="floyd"
+                pixelSize={2}
+                inkColor="#0C0D0E"
+                paperColor="#4ADE80"
+                revealRadius={180}
+                softness={0.55}
+                linger={1}
+              />
+            )}
           </div>
         </section>
 
