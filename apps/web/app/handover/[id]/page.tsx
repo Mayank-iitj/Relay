@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { IngestModal } from '@/components/workbench/IngestModal';
 import SpecularButton from '@/components/SpecularButton/SpecularButton';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api/v1';
 
 export default function HandoverWorkbench() {
   const params = useParams();

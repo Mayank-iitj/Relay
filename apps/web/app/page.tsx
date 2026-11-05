@@ -11,7 +11,7 @@ import CrystalizedBall from '@/components/CrystalizedBall/CrystalizedBall';
 import DitherVeil from '@/components/DitherVeil/DitherVeil';
 import SpecularButton from '@/components/SpecularButton/SpecularButton';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api/v1';
 
 export default function RelayDashboard() {
   const [handovers, setHandovers] = useState<any[]>([]);
@@ -25,8 +25,8 @@ export default function RelayDashboard() {
       setLoading(true);
       try {
         const [handoverRes, healthRes] = await Promise.all([
-          fetch(`${API_BASE}/handovers`).catch(() => fetch('/api/v1/handovers')),
-          fetch(`${API_BASE}/health`).catch(() => fetch('/api/v1/health'))
+          fetch(`${API_BASE}/handovers`),
+          fetch(`${API_BASE}/health`)
         ]);
 
         if (handoverRes && handoverRes.ok) {

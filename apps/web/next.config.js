@@ -3,14 +3,15 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: process.env.CORE_API_URL 
-          ? `${process.env.CORE_API_URL}/api/:path*` 
-          : 'http://127.0.0.1:8000/api/:path*',
-      },
-    ];
+    if (process.env.CORE_API_URL) {
+      return [
+        {
+          source: '/api/:path*',
+          destination: `${process.env.CORE_API_URL}/api/:path*`,
+        },
+      ];
+    }
+    return [];
   },
 };
 
