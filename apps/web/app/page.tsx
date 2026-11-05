@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { IngestModal } from '@/components/workbench/IngestModal';
 import TechText from '@/components/TechText/TechText';
+import CircularText from '@/components/CircularText/CircularText';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -105,18 +106,47 @@ export default function RelayDashboard() {
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
-            <span className="text-[10px] font-mono text-[#8B8D98] uppercase tracking-[0.25em]">
-              THE IMMUTABLE RECORD OF TRUTH
-            </span>
-            <Badge variant="success">PRODUCTION GRADE</Badge>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-1">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-[#8B8D98] uppercase tracking-[0.25em]">
+                  THE IMMUTABLE RECORD OF TRUTH
+                </span>
+                <Badge variant="success">PRODUCTION GRADE</Badge>
+              </div>
+              <h2 className="text-3xl font-extrabold tracking-tight text-[#ECEDEE]">
+                Enterprise Knowledge Handover & Contradiction Reconciliation
+              </h2>
+              <p className="text-sm text-[#8B8D98] leading-relaxed">
+                Relay extracts and reconciles project state from scattered communication trails (GitHub PRs, Slack incident dumps, Linear tickets) into an immutable, role-governed Transition Dossier with cryptographic SHA-256 provenance.
+              </p>
+            </div>
+
+            {/* CircularText Institutional Provenance Seal */}
+            <div className="shrink-0 flex items-center justify-center p-2 bg-[#151718]/60 border border-[#26292B] rounded-sm">
+              <CircularText
+                text="RELAY*PROVENANCE*VERIFIED*AUDIT*TRAIL*"
+                onHover="speedUp"
+                direction="clockwise"
+                spinDuration={18}
+                size={140}
+                fontSize={11}
+                fontWeight={700}
+                draggable
+                hoverTilt={20}
+                ring
+                ringColor="#26292B"
+                color="#4ADE80"
+                className="font-mono text-[#4ADE80]"
+              >
+                <div className="flex flex-col items-center justify-center text-center select-none pointer-events-none">
+                  <div className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse mb-1" />
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-[#ECEDEE]">MERKLE</span>
+                  <span className="text-[7px] font-mono text-[#8B8D98]">SEAL</span>
+                </div>
+              </CircularText>
+            </div>
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#ECEDEE]">
-            Enterprise Knowledge Handover & Contradiction Reconciliation
-          </h2>
-          <p className="text-sm text-[#8B8D98] leading-relaxed max-w-3xl">
-            Relay extracts and reconciles project state from scattered communication trails (GitHub PRs, Slack incident dumps, Linear tickets) into an immutable, role-governed Transition Dossier with cryptographic SHA-256 provenance.
-          </p>
         </section>
 
         {/* Feature Grid */}
