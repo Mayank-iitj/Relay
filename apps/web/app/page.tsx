@@ -107,9 +107,9 @@ export default function RelayDashboard() {
 
           <div className="flex items-center gap-2 pt-1">
             <span className="text-[10px] font-mono text-[#8B8D98] uppercase tracking-[0.25em]">
-              Deterministic Institutional Knowledge
+              THE IMMUTABLE RECORD OF TRUTH
             </span>
-            <Badge variant="success">PRODUCTION READY</Badge>
+            <Badge variant="success">PRODUCTION GRADE</Badge>
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-[#ECEDEE]">
             Enterprise Knowledge Handover & Contradiction Reconciliation

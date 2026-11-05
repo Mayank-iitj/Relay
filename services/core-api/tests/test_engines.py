@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from app.engine.chunker import ChunkerEngine
 from app.engine.contradiction import ContradictionEngine
 from app.engine.extractor import ExtractionService
@@ -61,8 +62,7 @@ def test_contradiction_detection():
     assert conflicts[0].status == "OPEN"
     assert "Dragonfly" in conflicts[0].conflict_reason or "Dragonfly" in conflicts[0].description
 
-@pytest.mark.asyncio
-async def test_orchestrator_pipeline():
+def test_orchestrator_pipeline():
     orchestrator = RelayOrchestrator()
     sample_sources = [
         {
@@ -82,7 +82,7 @@ async def test_orchestrator_pipeline():
             "content": "Dragonfly leak bug. Rolling back to Redis."
         }
     ]
-    result = await orchestrator.run_full_pipeline(sample_sources, "ws-123")
+    result = asyncio.run(orchestrator.run_full_pipeline(sample_sources, "ws-123"))
     assert "claims" in result
     assert len(result["claims"]) >= 2
     assert "conflicts" in result
