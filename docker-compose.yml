@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  core-api:
+    build:
+      context: ./services/core-api
+      dockerfile: Dockerfile
+    container_name: relay-core-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: relay-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - CORE_API_URL=http://core-api:8000
+      - NEXT_PUBLIC_API_BASE=http://localhost:8000/api/v1
+    depends_on:
+      core-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: relay-postgres
+    profiles: ["with-db"]
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: relay
+      POSTGRES_PASSWORD: relay_password
+      POSTGRES_DB: relay_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  pgdata:

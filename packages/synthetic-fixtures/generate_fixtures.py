@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 
 # Scenario: The Dragonfly Rollback
 # PR says it's done, but Slack later says it was rolled back.
@@ -36,5 +38,11 @@ SCENARIO_CONTRADICTION_TEST = {
     ]
 }
 
-with open("relay/packages/synthetic-fixtures/scenario_contradiction_test/dragonfly_rollback.json", "w") as f:
+target_dir = Path(__file__).parent / "scenario_contradiction_test"
+target_dir.mkdir(parents=True, exist_ok=True)
+target_file = target_dir / "dragonfly_rollback.json"
+
+with open(target_file, "w", encoding="utf-8") as f:
     json.dump(SCENARIO_CONTRADICTION_TEST, f, indent=2)
+
+print(f"Generated synthetic fixture at: {target_file}")
