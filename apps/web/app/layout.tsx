@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import PermanentBackground from '@/components/PixelBlast/PermanentBackground';
 
 export const metadata: Metadata = {
   title: 'Relay - The Immutable Record of Institutional Truth',
@@ -21,8 +22,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#0C0D0E] text-[#ECEDEE] min-h-screen selection:bg-[#FACC15]/20 selection:text-[#ECEDEE]">
-        {children}
+      <body className="bg-[#0C0D0E] text-[#ECEDEE] min-h-screen selection:bg-[#FACC15]/20 selection:text-[#ECEDEE] relative">
+        <PermanentBackground />
+        <div className="relative z-10 min-h-screen flex flex-col">
+          {children}
+        </div>
       </body>
     </html>
   );
