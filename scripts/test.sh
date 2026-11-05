@@ -12,3 +12,4 @@ echo -e "\n[2/2] Running Web Frontend Typecheck & Build..."
 npm run build --prefix apps/web
 
 echo -e "\nAll Relay tests and builds passed successfully!"
+

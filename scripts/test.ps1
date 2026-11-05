@@ -19,3 +19,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "`nAll Relay tests and builds passed successfully!" -ForegroundColor Green
+

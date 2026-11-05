@@ -105,3 +105,4 @@ def test_ingest_and_generate_pipeline():
     gen_data = gen_res.json()
     assert "handover_id" in gen_data
     assert gen_data["status"] == "UNDER_REVIEW"
+
