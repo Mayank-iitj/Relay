@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { IngestModal } from '@/components/workbench/IngestModal';
+import TechText from '@/components/TechText/TechText';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -80,8 +81,31 @@ export default function RelayDashboard() {
       {/* Main Content */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-8 space-y-10">
         {/* Banner Section */}
-        <section className="space-y-3 border-b border-[#26292B] pb-8">
-          <div className="flex items-center gap-2">
+        <section className="space-y-4 border-b border-[#26292B] pb-8">
+          {/* TechText Interactive Hero Display */}
+          <div className="w-full h-48 md:h-56 relative overflow-hidden bg-[#151718]/40 border border-[#26292B] rounded-sm flex items-center justify-center">
+            <TechText
+              text="RELAY"
+              fontWeight={800}
+              fontSize={140}
+              letterSpacing={-0.03}
+              color="#ECEDEE"
+              accentColor="#4ADE80"
+              reveal="letter"
+              dashLength={4}
+              dashGap={2}
+              specks={18}
+              intro="none"
+              introDuration={2}
+              clickKick
+              draggable
+              sweep
+              guides={false}
+              className="w-full h-full"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
             <span className="text-[10px] font-mono text-[#8B8D98] uppercase tracking-[0.25em]">
               Deterministic Institutional Knowledge
             </span>
