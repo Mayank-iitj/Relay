@@ -10,8 +10,6 @@ import CircularText from '@/components/CircularText/CircularText';
 import CrystalizedBall from '@/components/CrystalizedBall/CrystalizedBall';
 import DitherVeil from '@/components/DitherVeil/DitherVeil';
 import SpecularButton from '@/components/SpecularButton/SpecularButton';
-import MagicBento from '@/components/MagicBento/MagicBento';
-import FlyingButton from '@/components/FlyingButton/FlyingButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -51,7 +49,7 @@ export default function RelayDashboard() {
   const defaultHandoverId = handovers[0]?.id || "f5c22997-cbf6-4b89-a5f1-331e3d30628e";
 
   return (
-    <div className="min-h-screen bg-[#0C0D0E] text-[#ECEDEE] font-sans selection:bg-[#FACC15]/20 flex flex-col">
+    <div className="min-h-screen bg-[#0C0D0E]/80 text-[#ECEDEE] font-sans selection:bg-[#FACC15]/20 flex flex-col">
       {/* Precision Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#26292B] bg-[#151718] shrink-0">
         <div className="flex items-center gap-3">
@@ -90,23 +88,6 @@ export default function RelayDashboard() {
           >
             + Ingest Custom Data
           </SpecularButton>
-
-          <FlyingButton
-            size="small"
-            theme="dark"
-            altitude={130}
-            hoverTime={2.2}
-            jets={2}
-            thrustColor="#4ADE80"
-            smokeColor="#4ADE80"
-            buttonColor="#151718"
-            textColor="#4ADE80"
-            onClick={() => {
-              window.location.href = `/handover/${defaultHandoverId}`;
-            }}
-          >
-            Launch Flight ✈
-          </FlyingButton>
 
           <Link
             href={`/handover/${defaultHandoverId}`}
@@ -187,77 +168,31 @@ export default function RelayDashboard() {
           </div>
         </section>
 
-        {/* Institutional Architecture Magic Bento */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-widest text-[#8B8D98]">
-              Institutional Architecture & Governance Matrix
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-[#151718] border border-[#26292B] text-[#4ADE80] rounded-sm">
-              INTERACTIVE BENTO
-            </span>
+        {/* Feature Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-5 border border-[#26292B] bg-[#151718]/80 rounded-sm space-y-2">
+            <div className="text-[10px] font-mono uppercase text-[#FACC15]">01 / Temporal Contradiction Detection</div>
+            <h3 className="text-sm font-bold text-[#ECEDEE]">Pairwise Assertion Matrix</h3>
+            <p className="text-xs text-[#8B8D98] leading-relaxed">
+              Surfaces architectural rollback collisions (e.g., Dragonfly PR vs Slack rollback) for human arbitration rather than silent hallucinatory blending.
+            </p>
           </div>
 
-          <MagicBento
-            columns={3}
-            rowHeight={220}
-            gap={14}
-            radius={6}
-            theme="dark"
-            glowColor="#4ADE80"
-            enableBorderGlow={true}
-            enableSpotlight={true}
-            spotlightRadius={300}
-            enableStars={true}
-            particleCount={20}
-            enableTilt={true}
-            enableMagnetism={true}
-            clickEffect={true}
-            items={[
-              {
-                label: "01 / TEMPORAL CONTRADICTION DETECTION",
-                title: "Pairwise Assertion Matrix",
-                description: "Surfaces architectural rollback collisions (e.g., Dragonfly PR vs Slack rollback) for human arbitration rather than silent hallucinatory blending.",
-                visual: "analytics",
-                colSpan: 1,
-              },
-              {
-                label: "02 / ROLE-BASED PROJECTIONS (ABAC)",
-                title: "Restricted Access Boundaries",
-                description: "Dynamically scopes claims across Executive Lead, Direct Successor, and Contributor roles to eliminate institutional credential and architecture leakage.",
-                visual: "security",
-                colSpan: 1,
-              },
-              {
-                label: "03 / CRYPTOGRAPHIC ATTESTATION",
-                title: "SHA-256 Manifest Freeze",
-                description: "Calculates a canonical digest across verified claims, freezing the transition dossier into an unalterable compliance audit record.",
-                visual: "collaboration",
-                colSpan: 1,
-              },
-              {
-                label: "04 / FORENSIC STATE TOPOLOGY",
-                title: "WebGL Shader Visualization",
-                description: "Real-time canvas shader rendering of knowledge state topology, plasma density crackle, and dynamic claim error diffusion.",
-                visual: "dashboard",
-                colSpan: 1,
-              },
-              {
-                label: "05 / AUTOMATED INGESTION PIPELINES",
-                title: "Multi-Source Extraction",
-                description: "Parses asynchronous communication threads, pull request reviews, and issue states with millisecond synchronization.",
-                visual: "automation",
-                colSpan: 1,
-              },
-              {
-                label: "06 / MERKLE PROVENANCE AUDIT",
-                title: "Tamper-Evident Sign-Off Trails",
-                description: "Generates tamper-evident hash chains sealing executive handover declarations directly into local SQLite storage.",
-                visual: "integration",
-                colSpan: 1,
-              }
-            ]}
-          />
+          <div className="p-5 border border-[#26292B] bg-[#151718]/80 rounded-sm space-y-2">
+            <div className="text-[10px] font-mono uppercase text-[#4ADE80]">02 / Role-Based Projections (ABAC)</div>
+            <h3 className="text-sm font-bold text-[#ECEDEE]">Restricted Access Boundaries</h3>
+            <p className="text-xs text-[#8B8D98] leading-relaxed">
+              Dynamically scopes claims across Executive Lead, Direct Successor, and Contributor roles to eliminate institutional credential and architecture leakage.
+            </p>
+          </div>
+
+          <div className="p-5 border border-[#26292B] bg-[#151718]/80 rounded-sm space-y-2">
+            <div className="text-[10px] font-mono uppercase text-[#60A5FA]">03 / Cryptographic Attestation</div>
+            <h3 className="text-sm font-bold text-[#ECEDEE]">SHA-256 Manifest Freeze</h3>
+            <p className="text-xs text-[#8B8D98] leading-relaxed">
+              Calculates a canonical digest across verified claims, freezing the transition dossier into an unalterable compliance audit record.
+            </p>
+          </div>
         </section>
 
         {/* Interactive Engine Visualizers */}
@@ -367,21 +302,12 @@ export default function RelayDashboard() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FlyingButton
-                    size="small"
-                    theme="dark"
-                    altitude={120}
-                    jets={2}
-                    thrustColor="#4ADE80"
-                    smokeColor="#4ADE80"
-                    buttonColor="#26292B"
-                    textColor="#ECEDEE"
-                    onClick={() => {
-                      window.location.href = `/handover/${h.id}`;
-                    }}
+                  <Link
+                    href={`/handover/${h.id}`}
+                    className="bg-[#26292B] hover:bg-[#323539] text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
                   >
-                    Inspect Dossier ✈
-                  </FlyingButton>
+                    Inspect Dossier →
+                  </Link>
                   <Link
                     href={`/handover/${h.id}/runway`}
                     className="border border-[#26292B] hover:bg-[#1E2022] text-[#8B8D98] hover:text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
