@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { IngestModal } from '@/components/workbench/IngestModal';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -21,6 +22,7 @@ export default function HandoverWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [isFreezing, setIsFreezing] = useState(false);
   const [arbitratingConflictId, setArbitratingConflictId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchHandover = async () => {
     setLoading(true);
@@ -256,6 +258,14 @@ export default function HandoverWorkbench() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Ingest New Data Button */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#4ADE80] hover:bg-[#3ec46f] text-black px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-sm transition-all"
+          >
+            + Ingest Data
+          </button>
+
           {/* Status Badge */}
           <Badge variant={isFrozen ? 'info' : 'warning'}>
             {data?.status || 'UNDER_REVIEW'}
@@ -579,6 +589,11 @@ export default function HandoverWorkbench() {
           </AnimatePresence>
         </div>
       </main>
+
+      <IngestModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

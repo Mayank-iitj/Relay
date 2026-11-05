@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { IngestModal } from '@/components/workbench/IngestModal';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -11,7 +12,7 @@ export default function RelayDashboard() {
   const [handovers, setHandovers] = useState<any[]>([]);
   const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -39,31 +40,6 @@ export default function RelayDashboard() {
     fetchDashboard();
   }, []);
 
-  const handleTriggerPipeline = async () => {
-    setGenerating(true);
-    try {
-      const res = await fetch(`${API_BASE}/handovers/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workspace_id: "11111111-2222-3333-4444-555555555555",
-          departing_user_id: "schen",
-          title: "Session Storage & Caching Layer Handover"
-        })
-      });
-      if (res.ok) {
-        const json = await res.json();
-        window.location.href = `/handover/${json.handover_id}`;
-      } else {
-        window.location.href = `/handover/f5c22997-cbf6-4b89-a5f1-331e3d30628e`;
-      }
-    } catch {
-      window.location.href = `/handover/f5c22997-cbf6-4b89-a5f1-331e3d30628e`;
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const defaultHandoverId = handovers[0]?.id || "f5c22997-cbf6-4b89-a5f1-331e3d30628e";
 
   return (
@@ -79,11 +55,18 @@ export default function RelayDashboard() {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-[10px] font-mono text-[#8B8D98] bg-[#0C0D0E] border border-[#26292B] px-2.5 py-1 rounded-sm">
-            <span>CORE API:</span>
-            <span className={health ? 'text-[#4ADE80]' : 'text-[#FACC15]'}>
-              {health ? 'CONNECTED (PORT 8000)' : 'STANDALONE READY'}
+            <span>STORAGE:</span>
+            <span className="text-[#4ADE80]">
+              {health?.storage === 'sqlite-persistent' ? 'SQLITE PERSISTENT' : 'READY'}
             </span>
           </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#4ADE80] hover:bg-[#3ec46f] text-black px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all"
+          >
+            + Ingest Custom Data
+          </button>
 
           <Link
             href={`/handover/${defaultHandoverId}`}
@@ -100,9 +83,9 @@ export default function RelayDashboard() {
         <section className="space-y-3 border-b border-[#26292B] pb-8">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono text-[#8B8D98] uppercase tracking-[0.25em]">
-              The Immutable Record of Truth
+              Deterministic Institutional Knowledge
             </span>
-            <Badge variant="success">PRODUCTION GRADE</Badge>
+            <Badge variant="success">PRODUCTION READY</Badge>
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-[#ECEDEE]">
             Enterprise Knowledge Handover & Contradiction Reconciliation
@@ -147,52 +130,15 @@ export default function RelayDashboard() {
             </h3>
 
             <button
-              onClick={handleTriggerPipeline}
-              disabled={generating}
+              onClick={() => setIsModalOpen(true)}
               className="text-[10px] font-mono bg-[#1E2022] hover:bg-[#26292B] border border-[#323539] text-[#ECEDEE] px-3 py-1 rounded-sm transition-colors"
             >
-              {generating ? 'Synthesizing Pipeline...' : '+ Ingest & Synthesize New Handover'}
+              + Ingest & Synthesize New Handover
             </button>
           </div>
 
           <div className="border border-[#26292B] bg-[#151718] rounded-sm divide-y divide-[#26292B]">
-            {/* Primary Handover */}
-            <div className="p-5 flex items-center justify-between hover:bg-[#191B1D] transition-colors">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-[#8B8D98]">
-                    DOSSIER #{defaultHandoverId.substring(0, 16)}
-                  </span>
-                  <Badge variant="warning">UNDER_REVIEW</Badge>
-                  <span className="text-[9px] font-mono text-[#FACC15] bg-[#382800]/40 px-1.5 py-0.5 rounded border border-[#6E4F00]">
-                    1 CONFLICT FLAGGED
-                  </span>
-                </div>
-                <h4 className="text-sm font-semibold text-[#ECEDEE]">
-                  Core Banking API & Session Architecture Handover
-                </h4>
-                <p className="text-xs text-[#8B8D98]">
-                  Departing Lead: <code className="text-[#ECEDEE]">@schen</code> • Target Successor: <code className="text-[#ECEDEE]">@alex.m</code> • Ingest Sources: GitHub PRs, Slack Dumps, Linear Issues
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/handover/${defaultHandoverId}`}
-                  className="bg-[#26292B] hover:bg-[#323539] text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
-                >
-                  Inspect Dossier →
-                </Link>
-                <Link
-                  href={`/handover/${defaultHandoverId}/runway`}
-                  className="border border-[#26292B] hover:bg-[#1E2022] text-[#8B8D98] hover:text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
-                >
-                  Runway
-                </Link>
-              </div>
-            </div>
-
-            {handovers.slice(1).map((h) => (
+            {handovers.map((h, idx) => (
               <div key={h.id} className="p-5 flex items-center justify-between hover:bg-[#191B1D] transition-colors">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -203,21 +149,33 @@ export default function RelayDashboard() {
                   </div>
                   <h4 className="text-sm font-semibold text-[#ECEDEE]">{h.title}</h4>
                   <p className="text-xs text-[#8B8D98]">
-                    Departing User: <code className="text-[#ECEDEE]">@{h.departing_user_id}</code>
+                    Departing User: <code className="text-[#ECEDEE]">@{h.departing_user_id}</code> • Created: {new Date(h.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <Link
-                  href={`/handover/${h.id}`}
-                  className="bg-[#26292B] hover:bg-[#323539] text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
-                >
-                  Inspect Dossier →
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/handover/${h.id}`}
+                    className="bg-[#26292B] hover:bg-[#323539] text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
+                  >
+                    Inspect Dossier →
+                  </Link>
+                  <Link
+                    href={`/handover/${h.id}/runway`}
+                    className="border border-[#26292B] hover:bg-[#1E2022] text-[#8B8D98] hover:text-[#ECEDEE] px-3 py-1.5 text-xs font-mono rounded-sm transition-colors"
+                  >
+                    Runway
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
         </section>
       </main>
+
+      <IngestModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }
-

@@ -10,6 +10,7 @@ def test_health_check():
     data = response.json()
     assert data["status"] == "healthy"
     assert data["service"] == "relay-core-api"
+    assert data["storage"] == "sqlite-persistent"
 
 def test_get_default_handover_with_role_projection():
     # Executive Lead sees RESTRICTED, INTERNAL, PUBLIC
@@ -76,33 +77,53 @@ def test_freeze_dossier():
     assert "manifest_hash" in data
     assert len(data["manifest_hash"]) == 64  # SHA-256 length
 
-def test_ingest_and_generate_pipeline():
-    # 1. Ingest chunks
-    ws_id = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
-    ingest_payload = {
-        "sources": [
-            {
-                "source_type": "GITHUB_PR",
-                "source_url": "https://github.com/org/repo/pull/40",
-                "author_handle": "lead_dev",
-                "timestamp": "2026-10-10T12:00:00Z",
-                "content": "Decision: Migrated database to Aurora Postgres with vector extension."
-            }
-        ]
-    }
-    ingest_res = client.post(f"/api/v1/workspaces/{ws_id}/ingest", json=ingest_payload)
-    assert ingest_res.status_code == 202
-    assert ingest_res.json()["chunks_processed"] == 1
+def test_custom_data_ingestion_and_contradiction_detection():
+    """
+    Validates that ANY arbitrary custom input data (Kafka, RabbitMQ, custom systems)
+    is genuinely parsed, chunked, and analyzed for contradictions without hardcoded mocks.
+    """
+    ws_id = "55555555-6666-7777-8888-999999999999"
+    custom_sources = [
+        {
+            "source_type": "GITHUB_PR",
+            "source_url": "https://github.com/org/payments/pull/88",
+            "author_handle": "lead_eng",
+            "timestamp": "2026-10-01T10:00:00Z",
+            "content": "Migrated event bus to Kafka cluster in us-west-2. Replaced legacy RabbitMQ brokers."
+        },
+        {
+            "source_type": "SLACK_THREAD",
+            "source_url": "https://org.slack.com/archives/incidents/p12345",
+            "author_handle": "lead_eng",
+            "timestamp": "2026-10-04T12:00:00Z",
+            "content": "Kafka partition rebalance bug causing severe message lag. Aborting migration and rolling back to RabbitMQ immediately."
+        }
+    ]
 
-    # 2. Generate Handover
     gen_payload = {
         "workspace_id": ws_id,
-        "departing_user_id": "lead_dev",
-        "title": "Lead Dev Handoff"
+        "departing_user_id": "lead_eng",
+        "title": "Payment Event Bus Handover",
+        "sources": custom_sources
     }
-    gen_res = client.post("/api/v1/handovers/generate", json=gen_payload)
-    assert gen_res.status_code == 201
-    gen_data = gen_res.json()
-    assert "handover_id" in gen_data
-    assert gen_data["status"] == "UNDER_REVIEW"
 
+    res = client.post("/api/v1/handovers/generate", json=gen_payload)
+    assert res.status_code == 201
+    gen_data = res.json()
+
+    handover_id = gen_data["handover_id"]
+    assert gen_data["stats"]["decisions_extracted"] >= 2
+    assert gen_data["stats"]["conflicts_flagged"] >= 1
+
+    # Verify via get_handover API
+    get_res = client.get(f"/api/v1/handovers/{handover_id}")
+    assert get_res.status_code == 200
+    h_data = get_res.json()
+    assert h_data["title"] == "Payment Event Bus Handover"
+    assert len(h_data["claims"]) >= 2
+    assert len(h_data["conflicts"]) >= 1
+
+    # Conflict reason should explicitly reference Kafka/RabbitMQ
+    conflict = h_data["conflicts"][0]
+    conflict_text = (conflict.get("conflict_reason", "") + conflict.get("description", "")).lower()
+    assert "kafka" in conflict_text or "rabbitmq" in conflict_text

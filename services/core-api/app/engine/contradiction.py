@@ -1,57 +1,125 @@
 import re
 from typing import List, Tuple, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
-from app.models.domain import ExtractionResult, DecisionClaim, BlockerClaim, ConflictRecord, Claim
+from app.models.domain import ConflictRecord, Claim
 
 class ContradictionEngine:
     def __init__(self):
-        # Keywords indicating adoption / replacement vs deprecation / rollback / failure
-        self.adopt_keywords = ["replace", "migrate", "migrated", "switched", "adopt", "deployed", "retained", "active", "enable"]
-        self.rollback_keywords = ["rollback", "rolled back", "revert", "reverted", "abort", "aborted", "leak", "bug", "do not use", "deprecated", "failing"]
+        # Known enterprise entities and patterns
+        self.common_entities = [
+            "dragonfly", "redis", "postgres", "postgresql", "mysql", "mongodb",
+            "kafka", "rabbitmq", "sqs", "sns", "kinesis",
+            "auth0", "cognito", "clerk", "keycloak", "jwt",
+            "docker", "kubernetes", "k8s", "terraform", "helm",
+            "vpc", "aws", "gcp", "azure", "datadog", "pagerduty", "kms"
+        ]
+
+        self.adopt_keywords = [
+            "adopt", "adopted", "adopting", "replace", "replaced", "replacing",
+            "migrate", "migrated", "migrating", "switch", "switched", "deploy",
+            "deployed", "deploying", "retained", "retain", "active", "enabled",
+            "implement", "implemented", "upgrade", "upgraded", "use", "using"
+        ]
+
+        self.rollback_keywords = [
+            "rollback", "rolled back", "rolling back", "revert", "reverted", "reverting",
+            "abort", "aborted", "aborting", "leak", "leaking", "bug", "issue", "failure",
+            "failing", "do not use", "deprecated", "deprecate", "eviction", "decommission",
+            "decommissioned", "crashing", "corrupted"
+        ]
 
     def calculate_confidence(self, prov_score: float, freq_score: float, fresh_score: float) -> float:
-        # S = 0.40(C_prov) + 0.30(C_freq) + 0.30(C_fresh)
+        """
+        Calculates confidence score based on Document 7:
+        S = 0.40(C_prov) + 0.30(C_freq) + 0.30(C_fresh)
+        """
         score = (0.40 * prov_score) + (0.30 * freq_score) + (0.30 * fresh_score)
         return round(min(max(score, 0.0), 1.0), 2)
 
-    def detect_conflicts_between_claims(self, claims: List[Claim]) -> List[ConflictRecord]:
+    def extract_entities_from_text(self, text: str) -> List[str]:
+        text_lower = text.lower()
+        found = set()
+        for e in self.common_entities:
+            if re.search(r'\b' + re.escape(e) + r'\b', text_lower):
+                found.add(e)
+
+        # Detect PascalCase / CamelCase custom service names (e.g. AuthService, SessionStore, PaymentGateway)
+        custom_names = re.findall(r'\b[A-Z][a-zA-Z0-9]{2,}(?:Service|Store|Gateway|Engine|Worker|Queue|DB|API)\b', text)
+        for cn in custom_names:
+            found.add(cn.lower())
+
+        return list(found)
+
+    def detect_conflicts_between_claims(self, claims: List[Any]) -> List[ConflictRecord]:
+        """
+        Performs pairwise assertion matrix check to identify temporal state collisions.
+        """
         conflicts = []
+
         for i in range(len(claims)):
             for j in range(i + 1, len(claims)):
                 c1 = claims[i]
                 c2 = claims[j]
 
-                # Check if both claims discuss common critical entities (e.g. dragonfly, redis, session caching)
-                c1_text = f"{c1.title} {c1.description}".lower()
-                c2_text = f"{c2.title} {c2.description}".lower()
+                c1_id = c1.id if hasattr(c1, "id") else c1["id"]
+                c2_id = c2.id if hasattr(c2, "id") else c2["id"]
+                c1_title = c1.title if hasattr(c1, "title") else c1["title"]
+                c2_title = c2.title if hasattr(c2, "title") else c2["title"]
+                c1_desc = c1.description if hasattr(c1, "description") else c1["description"]
+                c2_desc = c2.description if hasattr(c2, "description") else c2["description"]
 
-                # Entity overlap check
-                entities = ["dragonfly", "redis", "postgres", "kafka", "vpc", "auth0", "docker", "k8s"]
-                shared_entities = [e for e in entities if e in c1_text and e in c2_text]
+                c1_full = f"{c1_title} {c1_desc}".lower()
+                c2_full = f"{c2_title} {c2_desc}".lower()
 
-                if shared_entities:
-                    c1_has_rollback = any(k in c1_text for k in self.rollback_keywords)
-                    c2_has_rollback = any(k in c2_text for k in self.rollback_keywords)
-                    c1_has_adopt = any(k in c1_text for k in self.adopt_keywords)
-                    c2_has_adopt = any(k in c2_text for k in self.adopt_keywords)
+                # Entity overlap
+                e1 = self.extract_entities_from_text(c1_full)
+                e2 = self.extract_entities_from_text(c2_full)
+                shared_entities = set(e1).intersection(set(e2))
 
-                    if (c1_has_adopt and c2_has_rollback) or (c1_has_rollback and c2_has_adopt):
-                        entity_name = shared_entities[0].title()
-                        conflict = ConflictRecord(
-                            id=str(uuid4()),
-                            handover_id=c1.handover_id or c2.handover_id,
-                            claim_a_id=c1.id,
-                            claim_b_id=c2.id,
-                            conflict_reason=f"Temporal Architectural Inversion on {entity_name}: One source asserts migration to {entity_name}, while a subsequent operational trail mandates rollback/retention.",
-                            description=f"Temporal Architectural Inversion on {entity_name}: Claim #{c1.id[:8]} conflicts with Claim #{c2.id[:8]} regarding system state and active infrastructure.",
-                            status="OPEN",
-                            temporal_delta_days=3
-                        )
-                        conflicts.append(conflict)
+                if not shared_entities:
+                    continue
+
+                # Polarity check
+                c1_adopt = any(k in c1_full for k in self.adopt_keywords)
+                c1_rollback = any(k in c1_full for k in self.rollback_keywords)
+                c2_adopt = any(k in c2_full for k in self.adopt_keywords)
+                c2_rollback = any(k in c2_full for k in self.rollback_keywords)
+
+                # Check for inversion
+                is_inverted = (c1_adopt and c2_rollback) or (c1_rollback and c2_adopt)
+
+                if is_inverted:
+                    entity_str = ", ".join([e.title() for e in shared_entities])
+                    c1_time_str = getattr(c1, "created_at", None) or (c1.get("created_at") if isinstance(c1, dict) else None)
+                    c2_time_str = getattr(c2, "created_at", None) or (c2.get("created_at") if isinstance(c2, dict) else None)
+
+                    delta_days = 3
+                    try:
+                        if c1_time_str and c2_time_str:
+                            t1 = datetime.fromisoformat(c1_time_str.replace("Z", "+00:00"))
+                            t2 = datetime.fromisoformat(c2_time_str.replace("Z", "+00:00"))
+                            delta_days = max(abs((t2 - t1).days), 1)
+                    except Exception:
+                        pass
+
+                    hid = getattr(c1, "handover_id", None) or (c1.get("handover_id") if isinstance(c1, dict) else None)
+
+                    reason = f"Temporal Architectural Inversion on {entity_str}: Claim '{c1_title}' conflicts with Claim '{c2_title}' regarding active infrastructure vs operational rollback."
+                    desc = f"Temporal Contradiction ({delta_days}d delta): Source evidence indicates conflicting architectural state for {entity_str}. Claim #{c1_id[:8]} vs Claim #{c2_id[:8]}."
+
+                    conflicts.append(ConflictRecord(
+                        id=f"conf-{uuid4().hex[:12]}",
+                        handover_id=hid,
+                        claim_a_id=c1_id,
+                        claim_b_id=c2_id,
+                        conflict_reason=reason,
+                        description=desc,
+                        status="OPEN",
+                        temporal_delta_days=delta_days
+                    ))
+
         return conflicts
 
-    def detect_conflicts_from_chunks(self, chunks: List[Any], claims: List[Claim]) -> List[ConflictRecord]:
-        # Pairwise check between claims and evidence chunks
-        conflicts = self.detect_conflicts_between_claims(claims)
-        return conflicts
+    def detect_conflicts_from_chunks(self, chunks: List[Any], claims: List[Any]) -> List[ConflictRecord]:
+        return self.detect_conflicts_between_claims(claims)
