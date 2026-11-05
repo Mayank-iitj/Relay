@@ -285,3 +285,4 @@ const CircularText = ({
 };
 
 export default CircularText;
+
