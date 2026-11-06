@@ -28,6 +28,25 @@ export default function HandoverWorkbench() {
   const fetchHandover = async () => {
     setLoading(true);
     setError(null);
+
+    // Check client storage first for instant load of imported dossiers
+    if (typeof window !== 'undefined' && handoverId !== 'f5c22997-cbf6-4b89-a5f1-331e3d30628e') {
+      try {
+        const cached = localStorage.getItem(`relay_dossier_${handoverId}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.claims) {
+            setData(parsed);
+            if (parsed.claims.length > 0 && !selectedClaimId) {
+              setSelectedClaimId(parsed.claims[0].id);
+            }
+          }
+        }
+      } catch (e) {
+        // Continue to fetch
+      }
+    }
+
     try {
       let res = await fetch(`${API_BASE}/handovers/${handoverId}?role=${role}`);
       if (!res.ok) {
@@ -37,105 +56,110 @@ export default function HandoverWorkbench() {
       if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
       const json = await res.json();
       setData(json);
+      try {
+        localStorage.setItem(`relay_dossier_${handoverId}`, JSON.stringify(json));
+      } catch (e) {}
       // Auto-select first claim if none selected
       if (json.claims && json.claims.length > 0 && !selectedClaimId) {
         setSelectedClaimId(json.claims[0].id);
       }
     } catch (err: any) {
       console.warn("Backend fetch failed, utilizing deterministic local state:", err.message);
-      // Provide resilient fallback state so the user interface renders
-      setData({
-        handover_id: handoverId,
-        title: "Core Banking API & Session Architecture Handover",
-        status: "UNDER_REVIEW",
-        role_projected: role,
-        manifest_hash: null,
-        frozen_at: null,
-        claims: [
-          {
-            id: "c101-session-retain-redis",
-            title: "Session Caching Engine: Retain Redis Core",
-            description: "Retained primary Redis cluster for session caching. Dragonfly migration was formally aborted due to native memory leaks during 50k req/s load test.",
-            confidence_score: 0.96,
-            security_classification: "INTERNAL",
-            human_status: "VERIFIED",
-            citations: [
-              {
-                id: "cite-1",
-                source: "SLACK_THREAD / #incident-room",
-                hash: "e3b0c44298fc1c14",
-                quote: "Heads up: Dragonfly memory leak bug observed during staging load test. Rolling back to Redis until v1.2 patch lands. Do not use Dragonfly for now.",
-                author: "schen",
-                time: "2026-10-21T09:15:00Z"
-              }
-            ]
-          },
-          {
-            id: "c102-session-dragonfly-rollout",
-            title: "Session Caching Migration: Dragonfly Replacement",
-            description: "Superseded architectural decision asserting Dragonfly replaced Redis in staging. Flagged as conflicting with operational rollback.",
-            confidence_score: 0.84,
-            security_classification: "INTERNAL",
-            human_status: "UNREVIEWED",
-            citations: [
-              {
-                id: "cite-2",
-                source: "GITHUB_PR #1082",
-                hash: "8a15b3c4f01d5e22",
-                quote: "Refactored session caching. Replaced Redis cluster with local Dragonfly instance due to memory overhead in VPC. Verified in staging.",
-                author: "schen",
-                time: "2026-10-18T14:22:00Z"
-              }
-            ]
-          },
-          ...(role === 'ROLE_EXECUTIVE_LEAD' ? [{
-            id: "c103-vpc-memory-overhead",
-            title: "VPC Memory Overhead & Cluster Eviction Spikes",
-            description: "Current Redis cluster in us-east-1 VPC reaches 88% memory ceiling during batch settlement windows, causing sporadic keyspace evictions.",
-            confidence_score: 0.91,
-            security_classification: "RESTRICTED",
-            human_status: "UNREVIEWED",
-            citations: [
-              {
-                id: "cite-3",
-                source: "LINEAR_ISSUE / LIN-442",
-                hash: "9f71c420e1a8b301",
-                quote: "Investigate Dragonfly as a memory-efficient replacement for Redis in our session store.",
-                author: "schen",
-                time: "2026-10-15T10:00:00Z"
-              }
-            ]
-          }] : []),
-          {
-            id: "c104-kms-key-rotation",
-            title: "KMS Cryptographic Signing & Key Rotation",
-            description: "Public key rotation infrastructure finalized. All customer session JWTs are signed via AWS KMS asymmetric RSA-4096 key pairs.",
-            confidence_score: 0.99,
-            security_classification: "PUBLIC",
-            human_status: "VERIFIED",
-            citations: [
-              {
-                id: "cite-4",
-                source: "GITHUB_PR #1090",
-                hash: "4b92d837ae1029aa",
-                quote: "Migrated JWT signing keys to AWS KMS with automated 90-day rotation. Deprecated local HMAC-SHA256 secrets.",
-                author: "schen",
-                time: "2026-10-22T16:45:00Z"
-              }
-            ]
-          }
-        ],
-        conflicts: [
-          {
-            id: "conf-dragonfly-redis-inversion",
-            description: "Temporal Contradiction: GITHUB_PR #1082 (Oct 18) declared Dragonfly deployed, while SLACK_THREAD MSG-9921 (Oct 21) rolled back to Redis due to memory leaks.",
-            status: "OPEN",
-            claim_a_id: "c101-session-retain-redis",
-            claim_b_id: "c102-session-dragonfly-rollout"
-          }
-        ]
-      });
-      setSelectedClaimId("c101-session-retain-redis");
+      // ONLY load default mock data if this is the DEFAULT_HANDOVER_ID!
+      if (handoverId === "f5c22997-cbf6-4b89-a5f1-331e3d30628e") {
+        setData({
+          handover_id: handoverId,
+          title: "Core Banking API & Session Architecture Handover",
+          status: "UNDER_REVIEW",
+          role_projected: role,
+          manifest_hash: null,
+          frozen_at: null,
+          claims: [
+            {
+              id: "c101-session-retain-redis",
+              title: "Session Caching Engine: Retain Redis Core",
+              description: "Retained primary Redis cluster for session caching. Dragonfly migration was formally aborted due to native memory leaks during 50k req/s load test.",
+              confidence_score: 0.96,
+              security_classification: "INTERNAL",
+              human_status: "VERIFIED",
+              citations: [
+                {
+                  id: "cite-1",
+                  source: "SLACK_THREAD / #incident-room",
+                  hash: "e3b0c44298fc1c14",
+                  quote: "Heads up: Dragonfly memory leak bug observed during staging load test. Rolling back to Redis until v1.2 patch lands. Do not use Dragonfly for now.",
+                  author: "schen",
+                  time: "2026-10-21T09:15:00Z"
+                }
+              ]
+            },
+            {
+              id: "c102-session-dragonfly-rollout",
+              title: "Session Caching Migration: Dragonfly Replacement",
+              description: "Superseded architectural decision asserting Dragonfly replaced Redis in staging. Flagged as conflicting with operational rollback.",
+              confidence_score: 0.84,
+              security_classification: "INTERNAL",
+              human_status: "UNREVIEWED",
+              citations: [
+                {
+                  id: "cite-2",
+                  source: "GITHUB_PR #1082",
+                  hash: "8a15b3c4f01d5e22",
+                  quote: "Refactored session caching. Replaced Redis cluster with local Dragonfly instance due to memory overhead in VPC. Verified in staging.",
+                  author: "schen",
+                  time: "2026-10-18T14:22:00Z"
+                }
+              ]
+            },
+            ...(role === 'ROLE_EXECUTIVE_LEAD' ? [{
+              id: "c103-vpc-memory-overhead",
+              title: "VPC Memory Overhead & Cluster Eviction Spikes",
+              description: "Current Redis cluster in us-east-1 VPC reaches 88% memory ceiling during batch settlement windows, causing sporadic keyspace evictions.",
+              confidence_score: 0.91,
+              security_classification: "RESTRICTED",
+              human_status: "UNREVIEWED",
+              citations: [
+                {
+                  id: "cite-3",
+                  source: "LINEAR_ISSUE / LIN-442",
+                  hash: "9f71c420e1a8b301",
+                  quote: "Investigate Dragonfly as a memory-efficient replacement for Redis in our session store.",
+                  author: "schen",
+                  time: "2026-10-15T10:00:00Z"
+                }
+              ]
+            }] : []),
+            {
+              id: "c104-kms-key-rotation",
+              title: "KMS Cryptographic Signing & Key Rotation",
+              description: "Public key rotation infrastructure finalized. All customer session JWTs are signed via AWS KMS asymmetric RSA-4096 key pairs.",
+              confidence_score: 0.99,
+              security_classification: "PUBLIC",
+              human_status: "VERIFIED",
+              citations: [
+                {
+                  id: "cite-4",
+                  source: "GITHUB_PR #1090",
+                  hash: "4b92d837ae1029aa",
+                  quote: "Migrated JWT signing keys to AWS KMS with automated 90-day rotation. Deprecated local HMAC-SHA256 secrets.",
+                  author: "schen",
+                  time: "2026-10-22T16:45:00Z"
+                }
+              ]
+            }
+          ],
+          conflicts: [
+            {
+              id: "conf-dragonfly-redis-inversion",
+              description: "Temporal Contradiction: GITHUB_PR #1082 (Oct 18) declared Dragonfly deployed, while SLACK_THREAD MSG-9921 (Oct 21) rolled back to Redis due to memory leaks.",
+              status: "OPEN",
+              claim_a_id: "c101-session-retain-redis",
+              claim_b_id: "c102-session-dragonfly-rollout"
+            }
+          ]
+        });
+        setSelectedClaimId("c101-session-retain-redis");
+      }
     } finally {
       setLoading(false);
     }
@@ -391,26 +415,36 @@ export default function HandoverWorkbench() {
                         <span className="text-[10px] font-mono text-[#FACC15] block uppercase font-bold">
                           Select Arbitration Resolution:
                         </span>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => handleArbitrate(conflict.id, 'RESOLVED_A')}
-                            className="text-[9px] font-mono bg-[#1B5430] hover:bg-[#23683C] text-white px-2.5 py-1 rounded-sm"
-                          >
-                            Retain Redis (Claim A)
-                          </button>
-                          <button
-                            onClick={() => handleArbitrate(conflict.id, 'RESOLVED_B')}
-                            className="text-[9px] font-mono bg-[#6E4F00] hover:bg-[#8A6300] text-white px-2.5 py-1 rounded-sm"
-                          >
-                            Adopt Dragonfly (Claim B)
-                          </button>
-                          <button
-                            onClick={() => setArbitratingConflictId(null)}
-                            className="text-[9px] font-mono border border-[#404245] text-[#8B8D98] hover:text-white px-2 py-1 rounded-sm"
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                        {(() => {
+                          const claimA = data?.claims?.find((c: any) => c.id === conflict.claim_a_id);
+                          const claimB = data?.claims?.find((c: any) => c.id === conflict.claim_b_id);
+                          const titleA = claimA ? (claimA.title.length > 25 ? claimA.title.slice(0, 25) + '...' : claimA.title) : 'Claim A';
+                          const titleB = claimB ? (claimB.title.length > 25 ? claimB.title.slice(0, 25) + '...' : claimB.title) : 'Claim B';
+                          return (
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => handleArbitrate(conflict.id, 'RESOLVED_A')}
+                                className="text-[9px] font-mono bg-[#1B5430] hover:bg-[#23683C] text-white px-2.5 py-1 rounded-sm flex items-center gap-1"
+                              >
+                                <span>✓</span>
+                                <span>Uphold: {titleA}</span>
+                              </button>
+                              <button
+                                onClick={() => handleArbitrate(conflict.id, 'RESOLVED_B')}
+                                className="text-[9px] font-mono bg-[#6E4F00] hover:bg-[#8A6300] text-white px-2.5 py-1 rounded-sm flex items-center gap-1"
+                              >
+                                <span>✓</span>
+                                <span>Uphold: {titleB}</span>
+                              </button>
+                              <button
+                                onClick={() => setArbitratingConflictId(null)}
+                                className="text-[9px] font-mono border border-[#404245] text-[#8B8D98] hover:text-white px-2 py-1 rounded-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <button

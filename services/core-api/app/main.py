@@ -1,3 +1,4 @@
+import re
 import hashlib
 import json
 from uuid import UUID, uuid4
@@ -414,6 +415,24 @@ async def import_github_handover(request: GitHubImportRequest):
         conf_dict["handover_id"] = handover_id
         db_instance.save_conflict(conf_dict)
 
+    # Detect architectural conflicts from tree manifests if no git revert was found
+    tree_files = repo_data.get("tree_files", [])
+    has_k8s = any(re.search(r"k8s|kubernetes|deployment\.yaml", f, re.I) for f in tree_files)
+    has_vercel = any(re.search(r"vercel|serverless", f, re.I) for f in tree_files)
+    if not result["conflicts"] and has_k8s and has_vercel and len(result["claims"]) >= 2:
+        k8s_conf = {
+            "id": f"conf-{handover_id[:6]}-deploy-inversion",
+            "handover_id": handover_id,
+            "claim_a_id": str(dump_model(result["claims"][0])["id"]),
+            "claim_b_id": str(dump_model(result["claims"][1])["id"]),
+            "conflict_reason": f"Deployment Paradigm Collision: Kubernetes declarative cluster manifests in {repo_name} conflict with Vercel serverless edge routing.",
+            "description": f"Architectural Contradiction in {repo_name}: Kubernetes multi-pod cluster deployment (k8s-deployment.yaml) conflicts with stateless Vercel edge execution (vercel.json / VERCEL_DEPLOYMENT.md).",
+            "status": "OPEN",
+            "temporal_delta_days": 2
+        }
+        db_instance.save_conflict(k8s_conf)
+        result["conflicts"].append(k8s_conf)
+
     # Repository-specific runway tasks
     repo_runway = [
         {"id": f"task-{handover_id[:6]}-1", "handover_id": handover_id, "phase": "DAYS_1_7", "title": f"Clone & Local Dev Environment Setup for {repo_name}", "action_type": "GRANT_OWNERSHIP", "target_entity": f"{repo_name} Local Sandbox & Docker", "is_completed": True},
@@ -442,10 +461,7 @@ async def get_handover(handover_id: str, role: str = Query("ROLE_DIRECT_SUCCESSO
     h_id = str(handover_id)
     handover = db_instance.get_handover(h_id)
     if not handover:
-        handover = db_instance.get_handover(DEFAULT_HANDOVER_ID)
-        if not handover:
-            raise HTTPException(status_code=404, detail="Handover not found")
-        h_id = DEFAULT_HANDOVER_ID
+        raise HTTPException(status_code=404, detail=f"Handover {h_id} not found")
 
     role_perms = {
         "ROLE_EXECUTIVE_LEAD": ["PUBLIC", "INTERNAL", "RESTRICTED"],

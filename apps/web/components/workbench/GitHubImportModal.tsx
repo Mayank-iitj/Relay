@@ -61,6 +61,13 @@ export const GitHubImportModal: React.FC<GitHubImportModalProps> = ({ isOpen, on
       }
 
       const json = await res.json();
+      if (json.dossier) {
+        try {
+          localStorage.setItem(`relay_dossier_${json.handover_id}`, JSON.stringify(json.dossier));
+        } catch (e) {
+          // ignore
+        }
+      }
       setStage('Import complete! Redirecting to dossier...');
       setTimeout(() => {
         window.location.href = `/handover/${json.handover_id}`;
