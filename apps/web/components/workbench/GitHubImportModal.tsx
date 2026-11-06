@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import SpecularButton from '@/components/SpecularButton/SpecularButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api/v1';
 
@@ -241,25 +240,14 @@ export const GitHubImportModal: React.FC<GitHubImportModalProps> = ({ isOpen, on
                 Cancel
               </button>
 
-              <SpecularButton
-                size="sm"
-                radius={4}
-                tint="#4ADE80"
-                tintOpacity={0.16}
-                textColor="#4ADE80"
-                lineColor="#4ADE80"
-                baseColor="#26292B"
-                intensity={1.2}
-                idleIntensity={0.35}
-                thickness={1.3}
-                glow={1}
-                followMouse
-                proximity={200}
-                onClick={handleSubmit as any}
-                className="font-mono text-xs uppercase font-bold tracking-wider px-4 py-1.5"
+              <button
+                type="submit"
+                disabled={loading || !cloneUrl.trim()}
+                className="font-mono text-xs uppercase font-bold tracking-wider px-5 py-2 rounded-sm bg-[#151718] border border-[#4ADE80] text-[#4ADE80] hover:bg-[#4ADE80]/15 hover:shadow-[0_0_16px_rgba(74,222,128,0.25)] transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               >
-                {loading ? 'Synthesizing...' : '🐙 Clone & Synthesize Dossier →'}
-              </SpecularButton>
+                <span>🐙</span>
+                <span>{loading ? 'Synthesizing...' : 'Clone & Synthesize Dossier →'}</span>
+              </button>
             </div>
           </form>
         </motion.div>

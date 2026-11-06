@@ -566,7 +566,7 @@ export const IngestModal: React.FC<IngestModalProps> = ({ isOpen, onClose }) => 
             <button
               type="submit"
               disabled={submitting}
-              className="text-[11px] font-mono font-bold uppercase tracking-wider bg-[#ECEDEE] text-[#0C0D0E] px-5 py-2 rounded-sm hover:bg-[#B0B2B5] transition-all disabled:opacity-50"
+              className="text-[11px] font-mono font-bold uppercase tracking-wider bg-[#151718] border border-[#4ADE80] text-[#4ADE80] hover:bg-[#4ADE80]/15 hover:shadow-[0_0_16px_rgba(74,222,128,0.25)] px-5 py-2 rounded-sm transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             >
               {submitting ? 'Synthesizing Pipeline...' : 'Synthesize Transition Dossier →'}
             </button>

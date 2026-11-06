@@ -10,7 +10,6 @@ import TechText from '@/components/TechText/TechText';
 import CircularText from '@/components/CircularText/CircularText';
 import CrystalizedBall from '@/components/CrystalizedBall/CrystalizedBall';
 import DitherVeil from '@/components/DitherVeil/DitherVeil';
-import SpecularButton from '@/components/SpecularButton/SpecularButton';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api/v1';
 
@@ -69,55 +68,28 @@ export default function RelayDashboard() {
             </span>
           </div>
 
-          <SpecularButton
-            size="sm"
-            radius={4}
-            tint="#4ADE80"
-            tintOpacity={0.12}
-            textColor="#4ADE80"
-            lineColor="#4ADE80"
-            baseColor="#26292B"
-            intensity={1.2}
-            idleIntensity={0.35}
-            shineSize={12}
-            shineFade={30}
-            thickness={1.3}
-            glow={1}
-            followMouse
-            proximity={200}
+          <button
             onClick={() => setIsModalOpen(true)}
-            className="font-mono text-[10px] uppercase font-bold tracking-widest px-3 py-1"
+            className="font-mono text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-sm bg-[#151718] border border-[#26292B] text-[#4ADE80] hover:border-[#4ADE80] hover:bg-[#4ADE80]/10 hover:shadow-[0_0_12px_rgba(74,222,128,0.2)] transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            + Ingest Custom Data
-          </SpecularButton>
+            <span className="text-[#4ADE80]">+</span>
+            <span>Ingest Custom Data</span>
+          </button>
 
-          <SpecularButton
-            size="sm"
-            radius={4}
-            tint="#FACC15"
-            tintOpacity={0.12}
-            textColor="#FACC15"
-            lineColor="#FACC15"
-            baseColor="#26292B"
-            intensity={1.2}
-            idleIntensity={0.35}
-            shineSize={12}
-            shineFade={30}
-            thickness={1.3}
-            glow={1}
-            followMouse
-            proximity={200}
+          <button
             onClick={() => setIsGitModalOpen(true)}
-            className="font-mono text-[10px] uppercase font-bold tracking-widest px-3 py-1"
+            className="font-mono text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-sm bg-[#151718] border border-[#26292B] text-[#FACC15] hover:border-[#FACC15] hover:bg-[#FACC15]/10 hover:shadow-[0_0_12px_rgba(250,204,21,0.2)] transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            🐙 Import GitHub Repo
-          </SpecularButton>
+            <span>🐙</span>
+            <span>Import GitHub Repo</span>
+          </button>
 
           <Link
             href={`/handover/${defaultHandoverId}`}
-            className="bg-[#ECEDEE] text-[#0C0D0E] px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-[#B0B2B5] transition-all"
+            className="font-mono text-[10px] uppercase font-bold tracking-widest px-3.5 py-1.5 rounded-sm bg-[#1E2022] border border-[#26292B] text-[#ECEDEE] hover:border-[#4ADE80] hover:text-[#4ADE80] hover:bg-[#4ADE80]/5 transition-all flex items-center gap-1.5"
           >
-            Open Primary Dossier
+            <span>Open Primary Dossier</span>
+            <span className="text-[9px]">→</span>
           </Link>
         </div>
       </header>
@@ -296,27 +268,13 @@ export default function RelayDashboard() {
                 <span>Import via Clone URL</span>
               </button>
 
-              <SpecularButton
-                size="sm"
-                radius={4}
-                tint="#ffffff"
-                tintOpacity={0.04}
-                textColor="#ECEDEE"
-                lineColor="#4ADE80"
-                baseColor="#323539"
-                intensity={1}
-                idleIntensity={0.25}
-                shineSize={10}
-                shineFade={28}
-                thickness={1.2}
-                glow={0.8}
-                followMouse
-                proximity={180}
+              <button
                 onClick={() => setIsModalOpen(true)}
-                className="text-[10px] font-mono px-3 py-1"
+                className="text-[10px] font-mono uppercase font-bold tracking-wider px-3.5 py-1.5 bg-[#151718] border border-[#26292B] hover:border-[#4ADE80] text-[#4ADE80] hover:bg-[#4ADE80]/10 hover:shadow-[0_0_12px_rgba(74,222,128,0.2)] rounded-sm transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                + Ingest & Synthesize New Handover
-              </SpecularButton>
+                <span>+</span>
+                <span>Ingest & Synthesize New Handover</span>
+              </button>
             </div>
           </div>
 
