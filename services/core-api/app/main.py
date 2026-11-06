@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from app.engine.chunker import ChunkerEngine
 from app.engine.extractor import ExtractionService
 from app.engine.orchestrator import RelayOrchestrator
+from app.engine.github_importer import GitHubImporter
 from app.core.database import db_instance, utc_now_iso
 from app.models.domain import (
     Handover, Claim, DecisionClaim, BlockerClaim,
@@ -200,6 +201,15 @@ class GenerateRequest(BaseModel):
     title: str
     sources: Optional[List[Dict[str, Any]]] = None
 
+class GitHubImportRequest(BaseModel):
+    clone_url: str
+    branch: Optional[str] = "main"
+    token: Optional[str] = None
+    title: Optional[str] = None
+    departing_user_id: Optional[str] = None
+    workspace_id: Optional[UUID] = None
+    max_commits: Optional[int] = 20
+
 class ArbitrateRequest(BaseModel):
     resolution: str  # RESOLVED_A, RESOLVED_B, RESOLVED_CUSTOM
     rationale: str
@@ -348,6 +358,82 @@ async def generate_handover(request: GenerateRequest):
             "decisions_extracted": len(result["claims"]),
             "conflicts_flagged": len(result["conflicts"]),
             "chunks_processed": result.get("processed_chunks", len(sources))
+        }
+    }
+
+@app.post("/api/v1/handovers/import-github", status_code=201)
+async def import_github_handover(request: GitHubImportRequest):
+    """
+    Imports a Git repository via Clone URL (no OAuth setup required).
+    Inspects commits, reconstructs architectural trails, flags contradictions,
+    and initializes a new Transition Dossier.
+    """
+    repo_data = GitHubImporter.import_repository(
+        clone_url=request.clone_url,
+        branch=request.branch or "main",
+        token=request.token,
+        max_commits=request.max_commits or 20
+    )
+
+    handover_id = str(uuid4())
+    ws_id = str(request.workspace_id or DEFAULT_WORKSPACE_ID)
+
+    repo_name = repo_data.get("repo") or "Repository"
+    default_author = repo_data["commits"][0]["author"] if repo_data.get("commits") else "lead_dev"
+    departing_user = request.departing_user_id or default_author
+    dossier_title = request.title or f"{repo_name} Architecture & Handover Dossier"
+
+    # Run genuine extraction pipeline over repo commits
+    orchestrator = RelayOrchestrator()
+    result = await orchestrator.run_full_pipeline(repo_data["source_chunks"], ws_id)
+
+    # Save Handover
+    db_instance.save_handover({
+        "id": handover_id,
+        "workspace_id": ws_id,
+        "title": dossier_title,
+        "departing_user_id": departing_user,
+        "target_successor_id": "alex.m",
+        "status": "UNDER_REVIEW",
+        "created_at": utc_now_iso()
+    })
+
+    # Save chunks, claims, conflicts
+    for chunk in result.get("chunks", []):
+        c_dict = dump_model(chunk)
+        c_dict["workspace_id"] = ws_id
+        db_instance.save_chunk(c_dict)
+
+    for claim in result["claims"]:
+        c_dict = dump_model(claim)
+        c_dict["handover_id"] = handover_id
+        db_instance.save_claim(c_dict)
+
+    for conflict in result["conflicts"]:
+        conf_dict = dump_model(conflict)
+        conf_dict["handover_id"] = handover_id
+        db_instance.save_conflict(conf_dict)
+
+    # Repository-specific runway tasks
+    repo_runway = [
+        {"id": f"task-{handover_id[:6]}-1", "handover_id": handover_id, "phase": "DAYS_1_7", "title": f"Clone & Local Dev Environment Setup for {repo_name}", "action_type": "GRANT_OWNERSHIP", "target_entity": f"{repo_name} Local Sandbox & Docker", "is_completed": True},
+        {"id": f"task-{handover_id[:6]}-2", "handover_id": handover_id, "phase": "DAYS_1_7", "title": f"Git Permissions & Branch Protection Audit for {repo_name}", "action_type": "RUNBOOK_VERIFY", "target_entity": f"GitHub Org & Protected Branches", "is_completed": False},
+        {"id": f"task-{handover_id[:6]}-3", "handover_id": handover_id, "phase": "DAYS_8_14", "title": "Review Git Commit Architectural Contradictions", "action_type": "RUNBOOK_VERIFY", "target_entity": "Institutional Conflict Ledger", "is_completed": False},
+        {"id": f"task-{handover_id[:6]}-4", "handover_id": handover_id, "phase": "DAYS_15_30", "title": f"Final Codebase Sign-Off & Revoke @{departing_user} Push Access", "action_type": "REVOKE_ACCESS", "target_entity": "GitHub Repository Admin Access", "is_completed": False},
+    ]
+    for t in repo_runway:
+        db_instance.save_runway_task(t)
+
+    return {
+        "handover_id": handover_id,
+        "title": dossier_title,
+        "repo": repo_name,
+        "commits_count": repo_data.get("commits_count", len(repo_data.get("commits", []))),
+        "status": "UNDER_REVIEW",
+        "stats": {
+            "decisions_extracted": len(result["claims"]),
+            "conflicts_flagged": len(result["conflicts"]),
+            "chunks_processed": result.get("processed_chunks", len(repo_data["source_chunks"]))
         }
     }
 

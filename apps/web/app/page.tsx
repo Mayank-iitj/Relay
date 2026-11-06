@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { IngestModal } from '@/components/workbench/IngestModal';
+import { GitHubImportModal } from '@/components/workbench/GitHubImportModal';
 import TechText from '@/components/TechText/TechText';
 import CircularText from '@/components/CircularText/CircularText';
 import CrystalizedBall from '@/components/CrystalizedBall/CrystalizedBall';
@@ -18,6 +19,7 @@ export default function RelayDashboard() {
   const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGitModalOpen, setIsGitModalOpen] = useState(false);
   const [activeVisualizer, setActiveVisualizer] = useState<'plasma' | 'veil'>('plasma');
 
   useEffect(() => {
@@ -87,6 +89,28 @@ export default function RelayDashboard() {
             className="font-mono text-[10px] uppercase font-bold tracking-widest px-3 py-1"
           >
             + Ingest Custom Data
+          </SpecularButton>
+
+          <SpecularButton
+            size="sm"
+            radius={4}
+            tint="#FACC15"
+            tintOpacity={0.12}
+            textColor="#FACC15"
+            lineColor="#FACC15"
+            baseColor="#26292B"
+            intensity={1.2}
+            idleIntensity={0.35}
+            shineSize={12}
+            shineFade={30}
+            thickness={1.3}
+            glow={1}
+            followMouse
+            proximity={200}
+            onClick={() => setIsGitModalOpen(true)}
+            className="font-mono text-[10px] uppercase font-bold tracking-widest px-3 py-1"
+          >
+            🐙 Import GitHub Repo
           </SpecularButton>
 
           <Link
@@ -263,27 +287,37 @@ export default function RelayDashboard() {
               Active Transition Dossiers ({handovers.length || 1})
             </h3>
 
-            <SpecularButton
-              size="sm"
-              radius={4}
-              tint="#ffffff"
-              tintOpacity={0.04}
-              textColor="#ECEDEE"
-              lineColor="#4ADE80"
-              baseColor="#323539"
-              intensity={1}
-              idleIntensity={0.25}
-              shineSize={10}
-              shineFade={28}
-              thickness={1.2}
-              glow={0.8}
-              followMouse
-              proximity={180}
-              onClick={() => setIsModalOpen(true)}
-              className="text-[10px] font-mono px-3 py-1"
-            >
-              + Ingest & Synthesize New Handover
-            </SpecularButton>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsGitModalOpen(true)}
+                className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 bg-[#151718] border border-[#26292B] hover:border-[#FACC15] text-[#FACC15] rounded-sm transition-colors flex items-center gap-1.5"
+              >
+                <span>🐙</span>
+                <span>Import via Clone URL</span>
+              </button>
+
+              <SpecularButton
+                size="sm"
+                radius={4}
+                tint="#ffffff"
+                tintOpacity={0.04}
+                textColor="#ECEDEE"
+                lineColor="#4ADE80"
+                baseColor="#323539"
+                intensity={1}
+                idleIntensity={0.25}
+                shineSize={10}
+                shineFade={28}
+                thickness={1.2}
+                glow={0.8}
+                followMouse
+                proximity={180}
+                onClick={() => setIsModalOpen(true)}
+                className="text-[10px] font-mono px-3 py-1"
+              >
+                + Ingest & Synthesize New Handover
+              </SpecularButton>
+            </div>
           </div>
 
           <div className="border border-[#26292B] bg-[#151718] rounded-sm divide-y divide-[#26292B]">
@@ -324,6 +358,11 @@ export default function RelayDashboard() {
       <IngestModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <GitHubImportModal
+        isOpen={isGitModalOpen}
+        onClose={() => setIsGitModalOpen(false)}
       />
     </div>
   );

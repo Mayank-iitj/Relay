@@ -14,7 +14,10 @@ interface IngestModalProps {
 export const IngestModal: React.FC<IngestModalProps> = ({ isOpen, onClose }) => {
   const [title, setTitle] = useState('Payment Gateway & Settlement Migration');
   const [author, setAuthor] = useState('alex.lead');
-  const [mode, setMode] = useState<'custom' | 'scenario'>('custom');
+  const [mode, setMode] = useState<'custom' | 'scenario' | 'github'>('custom');
+  const [cloneUrl, setCloneUrl] = useState('https://github.com/Mayank-iitj/Relay.git');
+  const [gitBranch, setGitBranch] = useState('main');
+  const [gitToken, setGitToken] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,6 +128,55 @@ export const IngestModal: React.FC<IngestModalProps> = ({ isOpen, onClose }) => 
     setSubmitting(true);
     setError(null);
 
+    if (mode === 'github') {
+      if (!cloneUrl.trim()) {
+        setError('Please provide a valid GitHub or Git Clone URL.');
+        setSubmitting(false);
+        return;
+      }
+
+      try {
+        let res = await fetch(`${API_BASE}/handovers/import-github`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clone_url: cloneUrl.trim(),
+            branch: gitBranch.trim() || 'main',
+            token: gitToken.trim() || undefined,
+            title: title.trim() || undefined,
+            departing_user_id: author.trim() || undefined,
+            max_commits: 20
+          })
+        });
+
+        if (!res.ok) {
+          res = await fetch(`/api/v1/handovers/import-github`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clone_url: cloneUrl.trim(),
+              branch: gitBranch.trim() || 'main',
+              token: gitToken.trim() || undefined,
+              title: title.trim() || undefined,
+              departing_user_id: author.trim() || undefined,
+              max_commits: 20
+            })
+          });
+        }
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || `HTTP Error: ${res.status}`);
+        }
+        const json = await res.json();
+        window.location.href = `/handover/${json.handover_id}`;
+      } catch (err: any) {
+        setError(err.message || 'Failed to import repository.');
+        setSubmitting(false);
+      }
+      return;
+    }
+
     const validChunks = chunks.filter(c => c.content.trim().length > 0);
     if (validChunks.length === 0) {
       setError('Please provide at least one source chunk with content.');
@@ -199,6 +251,186 @@ export const IngestModal: React.FC<IngestModalProps> = ({ isOpen, onClose }) => 
           </button>
         </div>
 
+        {/* Mode Selector */}
+        <div className="flex items-center gap-2 border-b border-[#26292B] pb-3">
+          <button
+            type="button"
+            onClick={() => setMode('custom')}
+            className={`text-xs font-mono px-3 py-1.5 rounded-sm transition-colors ${
+              mode === 'custom'
+                ? 'bg-[#26292B] text-[#4ADE80] font-bold border border-[#4ADE80]/30'
+                : 'text-[#8B8D98] hover:text-[#ECEDEE]'
+            }`}
+          >
+            Custom Threads & Dumps
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('scenario')}
+            className={`text-xs font-mono px-3 py-1.5 rounded-sm transition-colors ${
+              mode === 'scenario'
+                ? 'bg-[#26292B] text-[#4ADE80] font-bold border border-[#4ADE80]/30'
+                : 'text-[#8B8D98] hover:text-[#ECEDEE]'
+            }`}
+          >
+            Pre-loaded Scenarios
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('github')}
+            className={`text-xs font-mono px-3 py-1.5 rounded-sm transition-colors flex items-center gap-1.5 ${
+              mode === 'github'
+                ? 'bg-[#26292B] text-[#FACC15] font-bold border border-[#FACC15]/30'
+                : 'text-[#FACC15]/80 hover:text-[#FACC15]'
+            }`}
+          >
+            <span>🐙</span>
+            <span>Git Clone URL (No OAuth)</span>
+          </button>
+        </div>
+
+        {mode === 'github' ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98] block">
+                Quick Repository Presets:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCloneUrl('https://github.com/Mayank-iitj/Relay.git');
+                    setGitBranch('main');
+                    setTitle('Relay Core Infrastructure Handover');
+                  }}
+                  className="text-[10px] font-mono px-2.5 py-1 bg-[#151718] border border-[#26292B] hover:border-[#FACC15] text-[#ECEDEE] rounded-sm transition-colors"
+                >
+                  Relay Core (Self)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCloneUrl('https://github.com/fastapi/fastapi.git');
+                    setGitBranch('master');
+                    setTitle('FastAPI Framework Handover');
+                  }}
+                  className="text-[10px] font-mono px-2.5 py-1 bg-[#151718] border border-[#26292B] hover:border-[#FACC15] text-[#ECEDEE] rounded-sm transition-colors"
+                >
+                  FastAPI / Python
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCloneUrl('https://github.com/vercel/next.js.git');
+                    setGitBranch('canary');
+                    setTitle('Next.js App Engine Handover');
+                  }}
+                  className="text-[10px] font-mono px-2.5 py-1 bg-[#151718] border border-[#26292B] hover:border-[#FACC15] text-[#ECEDEE] rounded-sm transition-colors"
+                >
+                  Next.js / Vercel
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98]">
+                Git / GitHub Clone URL <span className="text-[#FACC15]">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={cloneUrl}
+                onChange={(e) => setCloneUrl(e.target.value)}
+                placeholder="https://github.com/owner/repository.git"
+                className="w-full bg-[#151718] border border-[#26292B] focus:border-[#FACC15] outline-none px-3 py-2 text-xs font-mono text-[#ECEDEE] rounded-sm"
+              />
+              <span className="text-[10px] text-[#8B8D98] block">
+                Works with any public HTTPS or SSH clone URL without credentials or OAuth.
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98]">
+                  Branch / Ref
+                </label>
+                <input
+                  type="text"
+                  value={gitBranch}
+                  onChange={(e) => setGitBranch(e.target.value)}
+                  placeholder="main"
+                  className="w-full bg-[#151718] border border-[#26292B] focus:border-[#FACC15] outline-none px-3 py-1.5 text-xs font-mono text-[#ECEDEE] rounded-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98]">
+                  Personal Access Token (PAT) <span className="text-[#8B8D98]">(Optional)</span>
+                </label>
+                <input
+                  type="password"
+                  value={gitToken}
+                  onChange={(e) => setGitToken(e.target.value)}
+                  placeholder="ghp_xxxxxxxxxxxx"
+                  className="w-full bg-[#151718] border border-[#26292B] focus:border-[#FACC15] outline-none px-3 py-1.5 text-xs font-mono text-[#ECEDEE] rounded-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98]">
+                  Handover Title <span className="text-[#8B8D98]">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Auto-derived from repository"
+                  className="w-full bg-[#151718] border border-[#26292B] focus:border-[#FACC15] outline-none px-3 py-1.5 text-xs text-[#ECEDEE] rounded-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98]">
+                  Departing Lead Handle <span className="text-[#8B8D98]">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder="Auto-detected from commits"
+                  className="w-full bg-[#151718] border border-[#26292B] focus:border-[#FACC15] outline-none px-3 py-1.5 text-xs font-mono text-[#ECEDEE] rounded-sm"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-[#450A0A]/40 border border-[#EF4444]/40 rounded-sm text-xs font-mono text-[#FCA5A5]">
+                {error}
+              </div>
+            )}
+
+            <div className="flex justify-end items-center gap-3 pt-4 border-t border-[#26292B]">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={submitting}
+                className="text-xs font-mono text-[#8B8D98] hover:text-[#ECEDEE] px-3 py-1.5 rounded-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-[#FACC15] hover:bg-[#EAB308] text-[#0C0D0E] font-mono font-bold text-xs uppercase px-4 py-2 rounded-sm transition-colors flex items-center gap-2"
+              >
+                {submitting ? 'Synthesizing...' : '🐙 Clone & Import Repository →'}
+              </button>
+            </div>
+          </form>
+        ) : (
+        <div>
         {/* Quick Presets */}
         <div className="space-y-1.5">
           <span className="text-[10px] font-mono uppercase tracking-wider text-[#8B8D98]">
@@ -340,6 +572,8 @@ export const IngestModal: React.FC<IngestModalProps> = ({ isOpen, onClose }) => 
             </button>
           </div>
         </form>
+        </div>
+        )}
       </motion.div>
     </div>
   );

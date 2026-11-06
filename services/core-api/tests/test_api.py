@@ -127,3 +127,32 @@ def test_custom_data_ingestion_and_contradiction_detection():
     conflict = h_data["conflicts"][0]
     conflict_text = (conflict.get("conflict_reason", "") + conflict.get("description", "")).lower()
     assert "kafka" in conflict_text or "rabbitmq" in conflict_text
+
+def test_github_repo_import_via_clone_url():
+    # Import a GitHub repository via clone URL without OAuth setup
+    payload = {
+        "clone_url": "https://github.com/Mayank-iitj/Relay.git",
+        "branch": "main",
+        "title": "Relay Repository Handover Dossier",
+        "departing_user_id": "schen",
+        "max_commits": 10
+    }
+    res = client.post("/api/v1/handovers/import-github", json=payload)
+    assert res.status_code == 201
+    data = res.json()
+    assert "handover_id" in data
+    assert data["status"] == "UNDER_REVIEW"
+    assert data["commits_count"] > 0
+    assert data["stats"]["decisions_extracted"] > 0
+
+    # Fetch the generated handover to confirm claims and runway
+    h_res = client.get(f"/api/v1/handovers/{data['handover_id']}")
+    assert h_res.status_code == 200
+    h_data = h_res.json()
+    assert len(h_data["claims"]) > 0
+
+    # Verify runway tasks exist
+    runway_res = client.get(f"/api/v1/handovers/{data['handover_id']}/runway")
+    assert runway_res.status_code == 200
+    tasks = runway_res.json()["tasks"]
+    assert len(tasks) >= 4
